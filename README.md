@@ -1,4 +1,4 @@
-# 🎓 Lecture Memory
+# Lecture Memory
 
 **Lecture Memory** is an advanced RAG (Retrieval-Augmented Generation) system designed for students to manage high-volume video lectures. It doesn't just search; it tracks how concepts evolve over and detects if topic contradicts a previous lecture.
 
@@ -8,7 +8,7 @@
 
 ---
 
-## 🚀 Key Features
+## Key Features
 
 - **🎬 Source Ingestion**: Direct YouTube ingestion with auto-cleanup of local assets.
 - **🎙️ Fast Transcription**: Transcription of lectures using `OpenAI Whisper`.
