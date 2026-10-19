@@ -20,8 +20,7 @@ class AgentState(TypedDict):
     contradiction: dict
     answer: str
 
-def retrieve_node(state: AgentState):
-    """Fetch relevant lecture chunks."""
+def retrieve_node(state: AgentState):   #Fetch relevant lecture chunks
     config = RetrievalConfig(
         session_from=state.get("session_from"),
         session_to=state.get("session_to")

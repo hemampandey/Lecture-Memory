@@ -12,7 +12,6 @@ def answer(
     session_to: int = None,
     check_for_contradictions: bool = True,
 ) -> QueryResult:
-    """Agentic answer pipeline using LangGraph."""
     logger.info(f"Answering query: {query}")
     
     initial_state = {
@@ -24,7 +23,6 @@ def answer(
         "answer": ""
     }
     
-    # Let the graph handle the heavy lifting
     final_state = graph.invoke(initial_state)
     
     sources = [retriever.payload_to_citation(c["payload"]) for c in final_state["chunks"]]
@@ -37,9 +35,6 @@ def answer(
     )
 
 def concept_timeline(concept: str) -> list[dict]:
-    """
-    Evolution of a concept across sessions.
-    """
     from retrieval.retriever import TemporalRetriever
     from openai import OpenAI
     

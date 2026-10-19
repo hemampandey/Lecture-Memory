@@ -1,8 +1,3 @@
-"""
-Raw Whisper segments → LectureChunk with metadata
-Whisper ~5-10 second micro-segments -> ~60-90 second semantic chunks — big enough for context,
-"""
-
 from openai import OpenAI
 import json
 from config import config
@@ -56,7 +51,7 @@ def merge_segments(
 
 
 def assign_topic_with_llm(text: str) -> tuple[str, list[str]]:
-    """Tags a chunk with a topic and keywords using the LLM."""
+    #Tags a chunk with a topic and keywords using the LLM.
     try:
         response = client.chat.completions.create(
             model=config.LLM_MODEL,
@@ -84,7 +79,6 @@ def build_chunks(
     speaker: Speaker = Speaker.PROFESSOR,
     use_llm_topics: bool = True,
 ) -> list[LectureChunk]:
-    """Orchestrates the chunking pipeline and model conversion."""
     merged = merge_segments(segments)
     chunks = []
 

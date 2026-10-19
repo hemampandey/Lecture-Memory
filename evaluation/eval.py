@@ -46,7 +46,6 @@ TEMPORAL_EVAL_SET = [
 ]
 
 CONTRADICTION_EVAL_SET = [
-    # (query, whether a contradiction is expected)
     ("recommended optimizer for training", True),
     ("what activation function to use", True),
     ("what is a tensor", False),
@@ -54,12 +53,8 @@ CONTRADICTION_EVAL_SET = [
 
 
 def eval_retrieval_precision() -> float:
-    """
-    For each query, check if retrieved chunks contain expected keywords.
-    Simple proxy for relevance — no human labels needed.
-    """
     scores = []
-    print("\n=== Retrieval Precision ===")
+    print("\nRetrieval Precision")
 
     for item in RETRIEVAL_EVAL_SET:
         results = retriever.retrieve(item["query"], RetrievalConfig(top_k=5))
@@ -78,10 +73,9 @@ def eval_retrieval_precision() -> float:
 
 
 def eval_temporal_filtering() -> float:
-    """Check that session filters are respected in retrieval."""
     correct = 0
     total = 0
-    print("\n=== Temporal Filtering Accuracy ===")
+    print("\nTemporal Filtering Accuracy")
 
     for item in TEMPORAL_EVAL_SET:
         config = RetrievalConfig(
@@ -112,11 +106,7 @@ def eval_temporal_filtering() -> float:
 
 
 def eval_contradiction_detection() -> dict:
-    """
-    Check if contradiction detection fires when expected.
-    Manual spot-check — record results for README.
-    """
-    print("\n=== Contradiction Detection ===")
+    print("\nContradiction Detection")
     results = []
 
     for query, expect_contradiction in CONTRADICTION_EVAL_SET:
@@ -145,7 +135,6 @@ def run_all():
     print(f"  Temporal Filtering Accuracy:  {temporal_accuracy:.2f}")
     print(f"  Contradiction Detection:       {contradiction_accuracy:.2f}")
 
-    # Save for README
     with open("evaluation/results.json", "w") as f:
         json.dump({
             "retrieval_precision": retrieval_precision,
@@ -154,7 +143,6 @@ def run_all():
         }, f, indent=2)
 
     print("\n✓ Results saved to evaluation/results.json")
-
 
 if __name__ == "__main__":
     run_all()

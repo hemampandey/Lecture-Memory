@@ -15,8 +15,7 @@ class RetrievalConfig:
     session_to: Optional[int] = None       
     session_id: Optional[str] = None    
     topic: Optional[str] = None         
-    score_threshold: float = 0.3        # drop low-confidence results
-
+    score_threshold: float = 0.3    
 
 class TemporalRetriever:
     def __init__(self):
@@ -25,7 +24,6 @@ class TemporalRetriever:
         self.embedder = get_embedder()
 
     def _build_filter(self, config: RetrievalConfig) -> Optional[Filter]:
-        """Build Qdrant filter from config. None = no filter."""
         conditions = []
 
         if config.session_from is not None:
@@ -79,28 +77,20 @@ class TemporalRetriever:
         ]
 
     def retrieve_for_contradiction(self, query: str, top_k: int = 6) -> list[dict]:
-        """
-        Retrieves more results spread across sessions for contradiction analysis.
-        Specifically avoids clustering
-        """
-        # Get results from early sessions
+        #results from early sessions
         early = self.retrieve(query, RetrievalConfig(
             top_k=top_k // 2,
             session_to=4,
         ))
-        # Get results from later sessions
+        #results from later sessions
         late = self.retrieve(query, RetrievalConfig(
             top_k=top_k // 2,
             session_from=5,
         ))
-
         return early + late
 
     def get_concept_timeline(self, concept: str, top_k: int = 8) -> list[dict]:
-        """
-        Returns all mentions of a concept sorted by session number.
-        Powers the 'Concept Timeline' feature.
-        """
+        #Returns all mentions of a concept sorted by session number.
         results = self.retrieve(concept, RetrievalConfig(top_k=top_k))
         # Sort by session for chronological display
         return sorted(results, key=lambda r: r["payload"]["session_number"])
@@ -113,7 +103,7 @@ class TemporalRetriever:
             session_id=payload["session_id"],
             session_number=payload["session_number"],
             timestamp_label=payload["timestamp_label"],
-            video_url=payload.get("timestamp_url"),   # deep-link URL
+            video_url=payload.get("timestamp_url"),  
             timestamp_seconds=payload["start_time"],
             excerpt=text[:excerpt_length] + ("..." if len(text) > excerpt_length else ""),
         )

@@ -1,10 +1,3 @@
-"""
-LectureChunk → embeddings → Qdrant vectorDB
-
-The metadata payload stored alongside each vector is what enables
-temporal filtering during retrieval.
-"""
-
 from qdrant_client import QdrantClient
 from qdrant_client.models import (Distance, VectorParams, PointStruct)
 from sentence_transformers import SentenceTransformer
@@ -31,7 +24,7 @@ def get_embedder() -> SentenceTransformer:
     return SentenceTransformer(EMBEDDING_MODEL)
 
 def ensure_collection(client: QdrantClient):
-    """Create collection if it doesn't exist."""
+    # Create collection if it doesn't exist.
     existing = [c.name for c in client.get_collections().collections]
     if COLLECTION not in existing:
         client.create_collection(
@@ -41,10 +34,6 @@ def ensure_collection(client: QdrantClient):
         
 
 def embed_and_upload(chunks: list[LectureChunk], batch_size: int = 32):
-    """
-    Embed chunks and upload to Qdrant with full metadata payload.
-    The payload is what powers temporal + topic filtering later.
-    """
     client = get_qdrant_client()
     embedder = get_embedder()
     ensure_collection(client)
@@ -54,7 +43,7 @@ def embed_and_upload(chunks: list[LectureChunk], batch_size: int = 32):
 
     points = []
     for chunk, vector in zip(chunks, embeddings):
-        # Build the YouTube deep-link timestamp URL
+        #timestamp URL
         timestamp_url = None
         if chunk.video_url and "youtube.com" in (chunk.video_url or ""):
             video_id = chunk.video_url.split("v=")[-1].split("&")[0]

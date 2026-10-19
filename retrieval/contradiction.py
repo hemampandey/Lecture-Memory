@@ -11,7 +11,6 @@ client = OpenAI(
     base_url=config.OPENAI_BASE_URL
 )
 
-
 CONTRADICTION_PROMPT = """You are analyzing lecture excerpts on the same topic from different sessions.
 
 Determine if these excerpts:

@@ -1,7 +1,3 @@
-"""
-Step 1: YouTube URL (or local file) → timestamped transcript segments
-"""
-
 import whisper
 import yt_dlp
 import os
@@ -11,7 +7,7 @@ from tqdm import tqdm
 from config import config
 
 def download_audio(youtube_url: str, output_dir: str = None) -> tuple[str,str]:
-    """Download audio from a YouTube lecture. Returns path to audio file."""
+    # Download audio from YT lecture. Returns path to audio file.
     if output_dir is None:
         output_dir = str(config.RAW_DATA_DIR)
     
@@ -38,12 +34,7 @@ def download_audio(youtube_url: str, output_dir: str = None) -> tuple[str,str]:
 
 
 def transcribe(audio_path: str, model_size: str = "base") -> list[dict]:
-    """
-    Transcribe audio with Whisper.
-    Returns list of segments with start/end timestamps.
-    """
     model = whisper.load_model(model_size)
-
     result = model.transcribe(audio_path, verbose=False)
 
     segments = []
@@ -57,11 +48,9 @@ def transcribe(audio_path: str, model_size: str = "base") -> list[dict]:
     return segments
 
 def save_transcript(segments: list[dict], output_path: str):
-    """Save raw transcript JSON for inspection / reuse."""
     with open(output_path, "w") as f:       # Saves transcript to output_path
         json.dump(segments, f, indent=2)
 
-def cleanup_audio(audio_path: str):
-    """Delete the downloaded audio file to save space."""
+def cleanup_audio(audio_path: str): #Delete the downloaded audio file
     if os.path.exists(audio_path):
         os.remove(audio_path)
