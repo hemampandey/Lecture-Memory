@@ -10,7 +10,24 @@ dependencies = [
     "qdrant-client>=1.17.1",
     "sentence-transformers>=5.4.1",
     "streamlit>=1.57.0",
-    "openai-whisper",
     "yt-dlp>=2026.3.17",
+    "youtube-transcript-api>=1.2.0",
     "langgraph>=1.1.10",
+    # Pulled in by sentence-transformers; listed so the CPU-only index below applies on Linux
+    "torch",
 ]
+
+[project.optional-dependencies]
+# Local Whisper transcription (TRANSCRIBE_BACKEND=local). Install with: uv sync --extra local
+local = [
+    "openai-whisper",
+]
+
+# Linux hosts (Streamlit Community Cloud) get CPU-only torch instead of the multi-GB CUDA build
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true

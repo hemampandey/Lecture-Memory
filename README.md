@@ -10,8 +10,8 @@
 
 ## Key Features
 
-- **🎬 Source Ingestion**: Direct YouTube ingestion with auto-cleanup of local assets.
-- **🎙️ Fast Transcription**: Transcription of lectures using `OpenAI Whisper`.
+- **🎬 Source Ingestion**: YouTube URLs (existing captions first, audio download as fallback) or uploaded audio/video files.
+- **🎙️ Fast Transcription**: Local `OpenAI Whisper`, or any OpenAI-compatible transcription API for hosted deployments.
 - **🤖 Agentic Workflow**: Used **LangGraph** for modular retrieval and synthesis.
 - **🧠 Temporal RAG**: Retrieval that understands chronological sequence.
 - **⚠️ Contradiction Detection**: Cross-references early lectures with later ones to find conflicting claims or evolved definitions.
@@ -48,7 +48,7 @@
 
 - **Frontend**: Streamlit
 - **Vector DB**: Qdrant (Local Docker)
-- **Transcription**: OpenAI Whisper (`tiny` model for speed)
+- **Transcription**: YouTube captions, local OpenAI Whisper (`tiny` model for speed) or a hosted Whisper API
 - **Embeddings**: `sentence-transformers` (all-MiniLM-L6-v2)
 - **LLM**: GPT-4o-mini
 
@@ -72,18 +72,24 @@ Most RAG systems just find the most similar text. But in a course, a definition 
 
    *Local-only alternative:* leave `QDRANT_URL` empty and run `docker run -p 6333:6333 qdrant/qdrant`.
 
-2. **Check System**:
+2. **Install dependencies** (the `local` extra adds Whisper for on-device transcription):
+   ```bash
+   uv sync --extra local
+   ```
+   Skip `--extra local` and set `TRANSCRIBE_BACKEND=api` to transcribe through an API instead.
+
+3. **Check System**:
    ```bash
    uv run python main.py
    ```
 
-3. **Launch the UI**:
+4. **Launch the UI**:
    ```bash
    uv run streamlit run ui/app.py
    ```
 
-4. **Ingest your first lecture**:
-   Go to the **"Add Lecture"** tab in the UI and paste a YouTube URL!
+5. **Ingest your first lecture**:
+   Go to the **"Add Lecture"** tab in the UI and paste a YouTube URL or upload an audio/video file!
 
 ---
 
@@ -95,7 +101,20 @@ Most RAG systems just find the most similar text. But in a course, a definition 
    OPENAI_API_KEY = "..."
    QDRANT_URL = "https://<cluster-id>.<region>.cloud.qdrant.io:6333"
    QDRANT_API_KEY = "..."
+
+   # The host has ~1GB RAM and no GPU, so transcribe through an API
+   TRANSCRIBE_BACKEND = "api"
+   # Only needed if OPENAI_* points at a provider without an audio API (e.g. GitHub Models)
+   TRANSCRIBE_API_KEY = "..."
+   TRANSCRIBE_BASE_URL = "https://api.openai.com/v1"   # or https://api.groq.com/openai/v1
+   TRANSCRIBE_MODEL = "whisper-1"                      # or "whisper-large-v3" on Groq
    ```
-3. `packages.txt` installs `ffmpeg` for audio extraction.
+3. Dependencies: Community Cloud installs from `uv.lock` (it takes priority over `requirements.txt`). Whisper is an optional extra, so it isn't installed, and `torch` comes from the CPU-only index on Linux. If you change dependencies, edit `pyproject.toml` and run `uv lock`.
+4. `packages.txt` installs `ffmpeg`, used to compress and split audio over the API's 25MB upload limit.
+
+**How "Add Lecture" works when hosted**
+- **YouTube URL** → existing captions are fetched first (`youtube-transcript-api`, no download). If there are none, audio is downloaded with `yt-dlp` and transcribed via the API.
+- YouTube often blocks both from cloud IPs. When that happens the UI says so; either set `YOUTUBE_PROXY_URL` to a residential proxy, or download the lecture yourself and use **Upload file** (200MB limit).
+- Ingesting from your laptop with `ingest.py` writes to the same Qdrant Cloud collection, so you can also ingest locally and only search from the hosted app.
 
 > Free Qdrant Cloud clusters are suspended after a period of inactivity — resume them from the Qdrant console if `main.py` reports a connection failure.

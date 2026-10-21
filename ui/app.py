@@ -1,7 +1,9 @@
 import streamlit as st
 import sys
+from pathlib import Path
 sys.path.append(".")
 
+from config import config
 from retrieval.answer_generator import answer, concept_timeline
 
 # ── Page config ──────────────────────────────────────────────────────────────
@@ -103,30 +105,81 @@ with tab1:
 
 with tab2:
     st.header("📥 Ingest New Lecture")
-    st.write("Enter a YouTube URL to transcribe and add it to your library.")
-    
+    transcriber = (
+        f"local Whisper (`{config.WHISPER_MODEL}`)" if config.TRANSCRIBE_BACKEND == "local"
+        else f"`{config.TRANSCRIBE_MODEL}` via API"
+    )
+    captions_note = "YouTube captions are used when available; otherwise " if config.YOUTUBE_CAPTIONS else ""
+    st.caption(f"{captions_note}audio is transcribed with {transcriber}.")
+
+    source_type = st.radio("Source", ["YouTube URL", "Upload file"], horizontal=True)
+
     with st.form("ingest_form"):
-        yt_url = st.text_input("YouTube URL", placeholder="https://www.youtube.com/watch?v=...")
+        yt_url, uploaded = None, None
+        if source_type == "YouTube URL":
+            yt_url = st.text_input("YouTube URL", placeholder="https://www.youtube.com/watch?v=...")
+        else:
+            uploaded = st.file_uploader(
+                "Lecture audio or video",
+                type=["mp3", "m4a", "wav", "ogg", "oga", "flac", "webm", "mp4", "mov", "mkv", "mpeg", "mpga"],
+            )
         col1, col2 = st.columns(2)
         s_num = col1.number_input("Session Number", min_value=1, value=1)
         s_label = col2.text_input("Session Label", placeholder="e.g. Intro to Neural Networks")
-        
+        use_llm_topics = st.checkbox(
+            "Tag topics with the LLM (one call per chunk — slower)", value=config.USE_LLM_TOPICS
+        )
+
         ingest_btn = st.form_submit_button("🚀 Start Ingestion")
-        
+
     if ingest_btn:
-        if not yt_url:
+        if source_type == "YouTube URL" and not yt_url:
             st.error("Please provide a YouTube URL.")
+        elif source_type == "Upload file" and uploaded is None:
+            st.error("Please choose a file to upload.")
         else:
-            from ingest import ingest_youtube
+            from ingest import ingest_youtube, ingest_local, IngestionError
+
             with st.status("Processing lecture...", expanded=True) as status:
-                st.write("📥 Downloading and transcribing (this may take a few minutes)...")
+                def report(message: str):
+                    st.write(message)
+                    status.update(label=message)
+
+                upload_path, result, failure = None, None, None
                 try:
-                    ingest_youtube(yt_url, s_num, s_label, whisper_model="tiny", use_llm_topics=False)
+                    if yt_url:
+                        result = ingest_youtube(
+                            yt_url.strip(), s_num, s_label, whisper_model=config.WHISPER_MODEL,
+                            use_llm_topics=use_llm_topics, progress=report,
+                        )
+                    else:
+                        # Transcription works on a file path; the upload only lives in memory
+                        upload_path = config.RAW_DATA_DIR / f"upload_session_{s_num:02d}{Path(uploaded.name).suffix.lower()}"
+                        upload_path.write_bytes(uploaded.getbuffer())
+                        result = ingest_local(
+                            str(upload_path), s_num, s_label or Path(uploaded.name).stem,
+                            whisper_model=config.WHISPER_MODEL, use_llm_topics=use_llm_topics, progress=report,
+                        )
                     status.update(label="✅ Ingestion Complete!", state="complete", expanded=False)
-                    st.success(f"Lecture '{s_label}' (Session {s_num}) is now searchable!")
+                except IngestionError as e:
+                    status.update(label="❌ Ingestion Failed", state="error", expanded=False)
+                    failure = str(e)
                 except Exception as e:
-                    status.update(label="❌ Ingestion Failed", state="error")
-                    st.error(f"Error: {str(e)}")
+                    status.update(label="❌ Ingestion Failed", state="error", expanded=False)
+                    failure = f"Error: {str(e)}"
+                finally:
+                    if upload_path and upload_path.exists():
+                        upload_path.unlink()
+
+            # Shown outside the status box so it stays visible once the box collapses
+            if failure:
+                st.error(failure)
+            else:
+                source_note = {"captions": "YouTube captions", "audio": "transcribed audio", "file": "the uploaded file"}[result["source"]]
+                st.success(
+                    f"Lecture '{result['label']}' (Session {s_num}) is now searchable — "
+                    f"{result['chunks']} chunk(s) from {source_note}."
+                )
 
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.divider()

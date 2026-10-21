@@ -1,12 +1,18 @@
+# Used by pip-based installs (e.g. the devcontainer). Streamlit Community Cloud
+# installs from uv.lock instead — keep pyproject.toml in sync with this file.
+
+# CPU-only torch (sentence-transformers needs it; the default Linux wheel pulls GBs of CUDA libs)
+--extra-index-url https://download.pytorch.org/whl/cpu
+
 # Core
 streamlit
 python-dotenv
 pydantic
 langgraph
 
-# Transcription
-openai-whisper
+# Transcription — local Whisper is optional, see requirements-local.txt
 yt-dlp
+youtube-transcript-api
 
 # ML & Embeddings
 torch
