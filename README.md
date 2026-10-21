@@ -67,14 +67,14 @@ Most RAG systems just find the most similar text. But in a course, a definition 
 
 ## 🚦 Getting Started
 
-1. **Start Qdrant**:
-   ```bash
-   docker run -p 6333:6333 qdrant/qdrant
-   ```
+1. **Create a Qdrant Cloud cluster** (free tier) at [cloud.qdrant.io](https://cloud.qdrant.io), then copy `.env.example` to `.env` and fill in `QDRANT_URL`, `QDRANT_API_KEY` and `OPENAI_API_KEY`.
+   The collection and its payload indexes are created automatically on first ingest.
+
+   *Local-only alternative:* leave `QDRANT_URL` empty and run `docker run -p 6333:6333 qdrant/qdrant`.
 
 2. **Check System**:
    ```bash
-   python main.py
+   uv run python main.py
    ```
 
 3. **Launch the UI**:
@@ -82,5 +82,20 @@ Most RAG systems just find the most similar text. But in a course, a definition 
    uv run streamlit run ui/app.py
    ```
 
-3. **Ingest your first lecture**:
+4. **Ingest your first lecture**:
    Go to the **"Add Lecture"** tab in the UI and paste a YouTube URL!
+
+---
+
+## ☁️ Deployment (Streamlit Community Cloud)
+
+1. Push the repo to GitHub and create an app at [share.streamlit.io](https://share.streamlit.io) with main file `ui/app.py`.
+2. In **App settings → Secrets**, add your config as top-level keys (Streamlit exposes them as environment variables):
+   ```toml
+   OPENAI_API_KEY = "..."
+   QDRANT_URL = "https://<cluster-id>.<region>.cloud.qdrant.io:6333"
+   QDRANT_API_KEY = "..."
+   ```
+3. `packages.txt` installs `ffmpeg` for audio extraction.
+
+> Free Qdrant Cloud clusters are suspended after a period of inactivity — resume them from the Qdrant console if `main.py` reports a connection failure.

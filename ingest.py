@@ -23,11 +23,11 @@ def ingest_youtube(url: str, session: int, label: str, whisper_model: str = "bas
     session_id = f"session_{session:02d}"
 
     # Step 1: Download
-    audio_path, detected_title = download_audio(url, output_dir="data/raw")
+    audio_path, detected_title = download_audio(url, output_dir=str(config.RAW_DATA_DIR))
     label = label or detected_title
 
     # Step 2: Transcribe
-    raw_path = f"data/raw/{session_id}_raw.json"
+    raw_path = str(config.RAW_DATA_DIR / f"{session_id}_raw.json")
     segments = transcribe(audio_path, model_size=whisper_model)
     save_transcript(segments, raw_path)
 
@@ -53,7 +53,7 @@ def ingest_local(file_path: str, session: int, label: str, whisper_model: str = 
     session_id = f"session_{session:02d}"
 
     segments = transcribe(file_path, model_size=whisper_model)
-    raw_path = f"data/raw/{session_id}_raw.json"
+    raw_path = str(config.RAW_DATA_DIR / f"{session_id}_raw.json")
     save_transcript(segments, raw_path)
 
     chunks = build_chunks(

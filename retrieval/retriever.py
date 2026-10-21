@@ -62,14 +62,19 @@ class TemporalRetriever:
         query_vector = self.embedder.encode(query).tolist()
         qdrant_filter = self._build_filter(config)
 
-        response = self.client.query_points(
-            collection_name=COLLECTION,
-            query=query_vector,
-            query_filter=qdrant_filter,
-            limit=config.top_k,
-            score_threshold=config.score_threshold,
-            with_payload=True,
-        )
+        try:
+            response = self.client.query_points(
+                collection_name=COLLECTION,
+                query=query_vector,
+                query_filter=qdrant_filter,
+                limit=config.top_k,
+                score_threshold=config.score_threshold,
+                with_payload=True,
+            )
+        except Exception:
+            if not self.client.collection_exists(COLLECTION):   # fresh deploy: nothing ingested yet
+                return []
+            raise
 
         return [
             {"payload": r.payload, "score": r.score}
